@@ -1,0 +1,140 @@
+class JacocoInstrument extends DefaultTask {
+  def buildType = "debug"
+  def flavorName = ""
+
+  @InputFiles
+  FileCollection jacocoClasspath
+
+  @TaskAction
+  def taskAction() {
+    ant.taskdef(name: 'instrument', classname: 'org.jacoco.ant.InstrumentTask', classpath: jacocoClasspath.asPath)
+
+    def variantPath
+    if (flavorName.length() > 0) {
+      variantPath = "$flavorName/$buildType"
+    } else {
+      variantPath = "$buildType"
+    }
+
+    def buildDir = project.buildDir
+    def instrumentedClassDir = "$buildDir/generated-classes/jacoco/$variantPath"
+    def backupClassDir = "$buildDir/generated-classes/jacoco/$variantPath" + "Backup"
+    def classDir = "$buildDir/classes/$variantPath"
+
+    ant.instrument(destdir: instrumentedClassDir) {
+      fileset(dir: classDir)
+    }
+
+    project.copy {
+      from classDir
+      into backupClassDir
+    }
+
+    project.delete classDir
+
+    project.copy {
+      from instrumentedClassDir
+      into classDir
+    }
+
+  }
+}
+
+class JacocoRestore extends DefaultTask {
+  def buildType = "debug"
+  def flavorName = ""
+
+  @TaskAction
+  def taskAction() {
+
+    def variantPath
+    if (flavorName.length() > 0) {
+      variantPath = "$flavorName/$buildType"
+    } else {
+      variantPath = "$buildType"
+    }
+
+    def buildDir = project.buildDir
+    def instrumentedClassDir = "$buildDir/generated-classes/jacoco/$variantPath"
+    def backupClassDir = "$buildDir/generated-classes/jacoco/$variantPath" + "Backup"
+    def classDir = "$buildDir/classes/$variantPath"
+
+    project.copy {
+      from backupClassDir
+      into classDir
+    }
+  }
+}
+
+class JacocoPullResult extends DefaultTask {
+  def buildType = "debug"
+  def flavorName = ""
+  def packageName = ""
+
+  @TaskAction
+  def taskAction() {
+    def variantPath
+    if (flavorName.length() > 0) {
+      variantPath = "$flavorName/$buildType"
+    } else {
+      variantPath = "$buildType"
+    }
+
+    def buildDir = project.buildDir
+
+    def jacocoResultPath = "$buildDir/jacoco/$variantPath"
+    new File(jacocoResultPath).mkdirs()
+    def proc = ("adb pull /sdcard/$packageName" + "jacoco.exec $jacocoResultPath/jacoco.exec").execute()
+    proc.in.eachLine { line -> println line }
+    proc.err.eachLine { line -> println 'RESULT: ' + line }
+    proc.waitFor()
+  }
+}
+
+allprojects {
+  afterEvaluate { project ->
+    def variants = project.android.applicationVariants
+    variants.all { variant ->
+      def log = project.logger
+      def javaCompile = variant.javaCompile;
+
+      if (variant.buildType.name.equals("release")) {
+        log.info("Skipping release build type.")
+        return;
+      }
+
+      def variantName = "$variant.name".capitalize()
+      def jacocoTask = tasks.create("jacoco" + "$variant.name".capitalize())
+      log.info("apply jacoco instrument task to debug tasks. $variant.buildType.name")
+//        def variantName = "$variant.name".capitalize()
+      def taskName = "jacocoInstrument" + "$variantName"
+      def jacocoInstrumentTask = tasks.create(taskName, JacocoInstrument)
+      jacocoInstrumentTask.jacocoClasspath = project.configurations["jacocoAnt"]
+      jacocoInstrumentTask.flavorName = variant.flavorName
+
+      def jacocoRestoreTask = tasks.create("jacocoRestore" + "$variantName", JacocoRestore)
+      jacocoRestoreTask.flavorName = variant.flavorName
+
+      def jacocoPullResultTask = tasks.create("jacocoPullResult" + "$variantName", JacocoPullResult)
+      jacocoPullResultTask.flavorName = variant.flavorName
+      jacocoPullResultTask.packageName = variant.packageName
+
+      tasks["compile$variantName"+"Java"].doLast {
+        log.info("JACOCO inject instrument task info " + name)
+
+        if(gradle.taskGraph.hasTask(jacocoTask)) {
+          jacocoInstrumentTask.execute()
+        }
+      }
+
+      tasks["connectedInstrumentTest$variantName"].doFirst {
+        jacocoRestoreTask.execute()
+      }
+      tasks["connectedInstrumentTest$variantName"].doLast {
+        jacocoPullResultTask.execute()
+      }
+
+      jacocoTask.dependsOn(tasks["connectedInstrumentTest$variantName"])
+    }
+  }
+}
