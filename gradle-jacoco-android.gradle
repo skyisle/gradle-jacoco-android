@@ -104,9 +104,15 @@ allprojects {
       }
 
       def variantName = "$variant.name".capitalize()
+      def variantNameForTest
+      if (variant.flavorName != null && variant.flavorName.length() > 0) {
+        variantNameForTest = variantName
+      } else {
+        variantNameForTest = ""
+      }
+
       def jacocoTask = tasks.create("jacoco" + "$variant.name".capitalize())
       log.info("apply jacoco instrument task to debug tasks. $variant.buildType.name")
-//        def variantName = "$variant.name".capitalize()
       def taskName = "jacocoInstrument" + "$variantName"
       def jacocoInstrumentTask = tasks.create(taskName, JacocoInstrument)
       jacocoInstrumentTask.jacocoClasspath = project.configurations["jacocoAnt"]
@@ -119,22 +125,22 @@ allprojects {
       jacocoPullResultTask.flavorName = variant.flavorName
       jacocoPullResultTask.packageName = variant.packageName
 
-      tasks["compile$variantName"+"Java"].doLast {
+      tasks["compile$variantName" + "Java"].doLast {
         log.info("JACOCO inject instrument task info " + name)
 
-        if(gradle.taskGraph.hasTask(jacocoTask)) {
+        if (gradle.taskGraph.hasTask(jacocoTask)) {
           jacocoInstrumentTask.execute()
         }
       }
 
-      tasks["connectedInstrumentTest$variantName"].doFirst {
+      tasks["connectedInstrumentTest$variantNameForTest"].doFirst {
         jacocoRestoreTask.execute()
       }
-      tasks["connectedInstrumentTest$variantName"].doLast {
+      tasks["connectedInstrumentTest$variantNameForTest"].doLast {
         jacocoPullResultTask.execute()
       }
 
-      jacocoTask.dependsOn(tasks["connectedInstrumentTest$variantName"])
+      jacocoTask.dependsOn(tasks["connectedInstrumentTest$variantNameForTest"])
     }
   }
 }
