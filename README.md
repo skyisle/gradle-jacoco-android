@@ -1,6 +1,7 @@
 gradle-jacoco-android
 ===============
 
+![SonarQube coverage report][1]
 generate jacoco coverage from android instrumtTest
 
 ## Usage
@@ -69,3 +70,4 @@ You can find jacoco.exec at build/jacoco/debug folder.
     See the License for the specific language governing permissions and
     limitations under the License.
 
+[1]:https://raw.github.com/skyisle/gradle-jacoco-android/master/screenshot.png
