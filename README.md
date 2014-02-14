@@ -2,6 +2,7 @@ gradle-jacoco-android
 ===============
 
 ![SonarQube coverage report][1]
+
 generate jacoco coverage from android instrumtTest
 
 ## Usage
