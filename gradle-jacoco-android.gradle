@@ -133,10 +133,10 @@ allprojects {
         }
       }
 
-      tasks["connectedAndroidTest$variantNameForTest"].doFirst {
+      tasks["connectedInstrumentTest$variantNameForTest"].doFirst {
         jacocoRestoreTask.execute()
       }
-      tasks["connectedAndroidTest$variantNameForTest"].doLast {
+      tasks["connectedInstrumentTest$variantNameForTest"].doLast {
         jacocoPullResultTask.execute()
       }
 
