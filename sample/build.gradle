@@ -1,0 +1,48 @@
+apply plugin: 'android'
+
+android {
+    compileSdkVersion 19
+    buildToolsVersion "19.0.3"
+
+    defaultConfig {
+        minSdkVersion 8
+        targetSdkVersion 19
+        versionCode 1
+        versionName "1.0"
+				testInstrumentationRunner "com.alanjeon.testing.JacocoRunner"
+    }
+
+		productFlavors {
+        googleplay {
+        }
+    }
+
+    buildTypes {
+        release {
+            runProguard false
+            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+        }
+    }
+
+    packagingOptions {
+            exclude 'LICENSE.txt'
+    }
+}
+
+dependencies {
+    compile 'com.android.support:appcompat-v7:19.+'
+    compile fileTree(dir: 'libs', include: ['*.jar'])
+
+    androidTestCompile 'org.jacoco:org.jacoco.agent:0.6.4.201312101107:runtime'
+    androidTestCompile 'com.jakewharton.espresso:espresso:1.1-r1'
+}
+
+configurations {
+	jacocoAnt
+}
+
+dependencies {
+	jacocoAnt 'org.jacoco:org.jacoco.ant:0.6.4.201312101107'
+}
+
+apply from: '../gradle-jacoco-android.gradle'
