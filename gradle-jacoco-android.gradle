@@ -133,14 +133,19 @@ allprojects {
         }
       }
 
-      tasks["connectedInstrumentTest$variantNameForTest"].doFirst {
+			// for backward compatibility gradle android plugin 0.8.+ 
+			def connectedTest = project.configurations.getNames().contains("androidTestCompile") ?
+				project.tasks.getByName("connectedAndroidTest$variantNameForTest") :
+				project.tasks.getByName("connectedInstrumentTest$variantNameForTest")
+
+      connectedTest.doFirst {
         jacocoRestoreTask.execute()
       }
-      tasks["connectedInstrumentTest$variantNameForTest"].doLast {
+      connectedTest.doLast {
         jacocoPullResultTask.execute()
       }
 
-      jacocoTask.dependsOn(tasks["connectedInstrumentTest$variantNameForTest"])
+      jacocoTask.dependsOn(connectedTest)
     }
   }
 }
