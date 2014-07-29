@@ -30,8 +30,6 @@ class JacocoInstrument extends DefaultTask {
       into backupClassDir
     }
 
-    project.delete classDir
-
     project.copy {
       from instrumentedClassDir
       into classDir
