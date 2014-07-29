@@ -17,8 +17,8 @@ class JacocoInstrument extends DefaultTask {
     }
 
     def buildDir = project.buildDir
-    def instrumentedClassDir = "$buildDir/intermediates/classes/$variantPath"
-    def backupClassDir = "$buildDir/intermediates/classes/$variantPath" + "Backup"
+    def instrumentedClassDir = "$buildDir/generated-classes/jacoco/$variantPath"
+    def backupClassDir = "$buildDir/generated-classes/jacoco/$variantPath" + "Backup"
     def classDir = "$buildDir/intermediates/classes/$variantPath"
 
     ant.instrument(destdir: instrumentedClassDir) {
@@ -29,6 +29,8 @@ class JacocoInstrument extends DefaultTask {
       from classDir
       into backupClassDir
     }
+
+    project.delete classDir
 
     project.copy {
       from instrumentedClassDir
@@ -53,8 +55,8 @@ class JacocoRestore extends DefaultTask {
     }
 
     def buildDir = project.buildDir
-    def instrumentedClassDir = "$buildDir/intermediates/classes/$variantPath"
-    def backupClassDir = "$buildDir/intermediates/classes/$variantPath" + "Backup"
+    def instrumentedClassDir = "$buildDir/generated-classes/jacoco/$variantPath"
+    def backupClassDir = "$buildDir/generated-classes/jacoco/$variantPath" + "Backup"
     def classDir = "$buildDir/intermediates/classes/$variantPath"
 
     project.copy {
