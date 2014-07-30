@@ -19,7 +19,7 @@ class JacocoInstrument extends DefaultTask {
     def buildDir = project.buildDir
     def instrumentedClassDir = "$buildDir/generated-classes/jacoco/$variantPath"
     def backupClassDir = "$buildDir/generated-classes/jacoco/$variantPath" + "Backup"
-    def classDir = "$buildDir/classes/$variantPath"
+    def classDir = "$buildDir/intermediates/classes/$variantPath"
 
     ant.instrument(destdir: instrumentedClassDir) {
       fileset(dir: classDir)
@@ -57,7 +57,7 @@ class JacocoRestore extends DefaultTask {
     def buildDir = project.buildDir
     def instrumentedClassDir = "$buildDir/generated-classes/jacoco/$variantPath"
     def backupClassDir = "$buildDir/generated-classes/jacoco/$variantPath" + "Backup"
-    def classDir = "$buildDir/classes/$variantPath"
+    def classDir = "$buildDir/intermediates/classes/$variantPath"
 
     project.copy {
       from backupClassDir
@@ -84,7 +84,7 @@ class JacocoPullResult extends DefaultTask {
 
     def jacocoResultPath = "$buildDir/jacoco/$variantPath"
     new File(jacocoResultPath).mkdirs()
-    def proc = ("adb pull /sdcard/$packageName" + "jacoco.exec $jacocoResultPath/jacoco.exec").execute()
+    def proc = ("adb pull /sdcard/$packageName" + "/jacoco.exec $jacocoResultPath/jacoco.exec").execute()
     proc.in.eachLine { line -> println line }
     proc.err.eachLine { line -> println 'RESULT: ' + line }
     proc.waitFor()
