@@ -84,7 +84,7 @@ class JacocoPullResult extends DefaultTask {
 
     def jacocoResultPath = "$buildDir/jacoco/$variantPath"
     new File(jacocoResultPath).mkdirs()
-    def proc = ("adb pull /sdcard/$packageName" + "jacoco.exec $jacocoResultPath/jacoco.exec").execute()
+    def proc = ("adb pull /sdcard/$packageName" + "/jacoco.exec $jacocoResultPath/jacoco.exec").execute()
     proc.in.eachLine { line -> println line }
     proc.err.eachLine { line -> println 'RESULT: ' + line }
     proc.waitFor()
